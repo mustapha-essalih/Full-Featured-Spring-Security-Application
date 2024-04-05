@@ -1,7 +1,6 @@
 package dev.api.model;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -16,11 +15,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
+@NoArgsConstructor
 @Getter
 @Setter
+@Table(name = "passwordToken")
 @Entity
-@Table(name = "verification_token")
-public class VerificationToken { 
+public class ResetTokenPassword {
     
     @Id  
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,19 +43,13 @@ public class VerificationToken {
     )
     private User user;
 
-    public VerificationToken(String token,
-                             LocalDateTime createdAt,
-                             LocalDateTime expiresAt,
-                             User user) {
+
+    public ResetTokenPassword(String token, LocalDateTime createdAt, LocalDateTime expiresAt, User user) {
         this.token = token;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
         this.user = user;
     }
 
-    public VerificationToken() {
-    }
-
     
-
 }

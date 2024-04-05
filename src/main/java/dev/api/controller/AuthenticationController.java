@@ -1,10 +1,12 @@
 package dev.api.controller;
 
+import dev.api.dto.ResetPasswordDto;
+import dev.api.dto.SendEmailDto;
 import dev.api.dto.SigninDto;
 import dev.api.dto.SignupDto;
-import dev.api.model.VerificationToken;
 import dev.api.service.AuthenticationService;
-import dev.api.service.TokenVerificationService;
+import dev.api.service.EmailVerificationService;
+import dev.api.service.PasswordResetService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,47 +18,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 
 
+@RequiredArgsConstructor
 @CrossOrigin("*")
 @RequestMapping("/api/auth")
 @RestController
 public class AuthenticationController {
 
-    private AuthenticationService authenticationService;
-    private TokenVerificationService tokenVerificationService;
-     
-
-    public AuthenticationController(AuthenticationService authenticationService,TokenVerificationService tokenVerificationService) {
-        this.authenticationService = authenticationService;
-        this.tokenVerificationService = tokenVerificationService;
-    }
+    private final AuthenticationService authenticationService;
+    private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService; 
+ 
 
     @PostMapping("/signup")
     ResponseEntity<String> signup(@RequestBody SignupDto dto , HttpServletRequest request)
     { 
-        authenticationService.signup(dto ,  getUrlOfRequest(request));
+        authenticationService.signup(dto , getUrlOfRequest(request));
         return ResponseEntity.status(HttpStatus.OK).body("Signup successful,  Please, check your email for to complete your registration");
-    }
-
-    @GetMapping("/verifyEmail")
-    public ResponseEntity<String> verifyEmail(@RequestParam String token)
-    {
-        String response = tokenVerificationService.verifyEmail(token);
-
-        if (response == null) 
-        {
-            return  ResponseEntity.status(403).body("token not found");
-        }
-        else if(response.equals("token expired"))
-        {
-            return  ResponseEntity.status(403).body(response);
-        }    
-        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/signin")
@@ -75,10 +57,68 @@ public class AuthenticationController {
         return ResponseEntity.status(401).build();
     }
 
-    private String getUrlOfRequest(HttpServletRequest request){
+    
+    @GetMapping("/emailVerification")
+    public ResponseEntity<String> emailVerification(@RequestParam String token)
+    {
+        String response = emailVerificationService.emailVerification(token);
+        
+        if (response == null) 
+        {
+            return  ResponseEntity.status(403).body("token not found");
+        }
+        else if(response.equals("token expired"))
+        {
+            return  ResponseEntity.status(403).body(response);
+        }    
+        return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/resendEmail")
+    ResponseEntity<String> resendEmailVerification(@RequestBody SendEmailDto dto,  HttpServletRequest request)
+    {
+        String response = emailVerificationService.resendEmail(dto.getUsername(), getUrlOfRequest(request));
+        if (response == null) 
+        {
+            return ResponseEntity.status(403).build();    
+        }
+        
+        return ResponseEntity.ok(response);
+    }
 
-        return "http://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
+    @PostMapping("/password-reset-request")
+    ResponseEntity<String> passwordResetRequest(@RequestBody SendEmailDto dto ,  HttpServletRequest request)
+    {
+        String response = passwordResetService.passwordResetRequest(dto.getUsername() , getUrlOfRequest(request));
+        if (response == null) 
+        {
+            return ResponseEntity.status(403).body("user not found");
+        }
+        if(response.equals("should verify you acount in first. resend email verification."))
+            return ResponseEntity.status(403).body(response);
+            
+        return ResponseEntity.ok(response); // should redirect the user to a page for enter old and new password
 
     }
 
+    @PostMapping("/reset-password")  
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordDto dto, @RequestParam("token") String token){
+        
+        String response = passwordResetService.resetPassword(dto , token);
+        if (response == null) 
+        {
+            return ResponseEntity.status(403).body("Invalid password reset token");
+        }
+        if (response.equals("Incorrect old passord")) 
+        {
+            return ResponseEntity.status(403).body("Incorrect old passord");    
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    private String getUrlOfRequest(HttpServletRequest request){
+    
+        return "http://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
+    }
 }

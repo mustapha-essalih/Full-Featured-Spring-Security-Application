@@ -2,13 +2,14 @@ package dev.api.service;
 
 import dev.api.dto.SigninDto;
 import dev.api.dto.SignupDto;
-import dev.api.event.RegistrationEvent;
+import dev.api.event.events.RegistrationEvent;
 import dev.api.model.Role;
 import dev.api.model.User;
 import dev.api.model.VerificationToken;
 import dev.api.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,30 +22,19 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
- 
+@RequiredArgsConstructor
 @Service
 public class AuthenticationService {
     
-    private UserRepository userRepository;
-    private PasswordEncoder passwordEncoder;
-    private AuthenticationManager authenticationManager;
-    private JwtService jwtService;
-    private ApplicationEventPublisher publisher;
-    private TokenVerificationService tokenVerificationService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final ApplicationEventPublisher publisher;
+    private final EmailVerificationService tokenVerificationService;
 
     
-
-    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager, JwtService jwtService, ApplicationEventPublisher publisher,
-            TokenVerificationService tokenVerificationService) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtService = jwtService;
-        this.publisher = publisher;
-        this.tokenVerificationService = tokenVerificationService;
-    }
-
+ 
 
     public void signup(SignupDto dto , String url) {
        
@@ -59,8 +49,7 @@ public class AuthenticationService {
         userRepository.save(newUser);
 
         String generatedverificationToken = UUID.randomUUID().toString();
-        System.out.println(generatedverificationToken);
-
+        
         VerificationToken verificationToken = new VerificationToken(generatedverificationToken, LocalDateTime.now(),LocalDateTime.now().plusMinutes(15), newUser);
         tokenVerificationService.saveVerificationToken(verificationToken);
 
@@ -69,9 +58,9 @@ public class AuthenticationService {
 
 
     public String signin(SigninDto dto ) {
-        
         try {
             Authentication authenticatedUser = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(),dto.getPassword()));
+            System.out.println(authenticatedUser);
              SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
             // System.out.println(authenticatedUser);
             User user = (User) authenticatedUser.getPrincipal();
@@ -82,7 +71,7 @@ public class AuthenticationService {
 
 
         } catch (Exception e) {
-            
+            System.out.println(e.getLocalizedMessage());
             return null;
         }
     }
