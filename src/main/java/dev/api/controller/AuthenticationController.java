@@ -1,12 +1,14 @@
 package dev.api.controller;
 
+import dev.api.dto.OtpDto;
 import dev.api.dto.ResetPasswordDto;
-import dev.api.dto.SendEmailDto;
+import dev.api.dto.UserDto;
 import dev.api.dto.SigninDto;
 import dev.api.dto.SignupDto;
 import dev.api.service.AuthenticationService;
 import dev.api.service.EmailVerificationService;
 import dev.api.service.PasswordResetService;
+import dev.api.service.TwoFactorAuthenticationService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +34,8 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService; 
- 
-
+    private final TwoFactorAuthenticationService twoFactorAuthenticationService;
+    
     @PostMapping("/signup")
     ResponseEntity<String> signup(@RequestBody SignupDto dto , HttpServletRequest request)
     { 
@@ -42,17 +44,17 @@ public class AuthenticationController {
     }
 
     @PostMapping("/signin")
-    ResponseEntity<Cookie> signin(@RequestBody SigninDto dto, HttpServletResponse response)
+    ResponseEntity<String> signin(@RequestBody SigninDto dto, HttpServletResponse res)
     {
-        String jwt = authenticationService.signin(dto);
+        String response = authenticationService.signin(dto);
      
-        if (jwt != null) 
+        if (response != null) 
         {
-            Cookie cookie = new Cookie("access_token", jwt);
-            cookie.setHttpOnly(true);
-            response.addCookie(cookie);
+            // Cookie cookie = new Cookie("access_token", response);
+            // cookie.setHttpOnly(true);
+            // response.addCookie(cookie);
 
-            return ResponseEntity.ok().body(cookie);    
+            return ResponseEntity.ok().body(response);    
         }
         return ResponseEntity.status(401).build();
     }
@@ -75,7 +77,7 @@ public class AuthenticationController {
     }
     
     @PostMapping("/resendEmail")
-    ResponseEntity<String> resendEmailVerification(@RequestBody SendEmailDto dto,  HttpServletRequest request)
+    ResponseEntity<String> resendEmailVerification(@RequestBody UserDto dto,  HttpServletRequest request)
     {
         String response = emailVerificationService.resendEmail(dto.getUsername(), getUrlOfRequest(request));
         if (response == null) 
@@ -87,7 +89,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/password-reset-request")
-    ResponseEntity<String> passwordResetRequest(@RequestBody SendEmailDto dto ,  HttpServletRequest request)
+    ResponseEntity<String> passwordResetRequest(@RequestBody UserDto dto ,  HttpServletRequest request)
     {
         String response = passwordResetService.passwordResetRequest(dto.getUsername() , getUrlOfRequest(request));
         if (response == null) 
@@ -115,6 +117,18 @@ public class AuthenticationController {
         }
 
         return ResponseEntity.ok(response);
+    }
+
+    
+    @PostMapping("/verifyOTP")
+    public ResponseEntity<?> verifyOTP(@RequestBody OtpDto dto) 
+    {
+        try {
+            var jwt = twoFactorAuthenticationService.verifyCode(dto);
+            return ResponseEntity.ok(jwt);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
     }
 
     private String getUrlOfRequest(HttpServletRequest request){

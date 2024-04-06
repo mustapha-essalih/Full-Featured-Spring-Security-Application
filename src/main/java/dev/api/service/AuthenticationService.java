@@ -32,7 +32,7 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final ApplicationEventPublisher publisher;
     private final EmailVerificationService tokenVerificationService;
-
+    private final TwoFactorAuthenticationService twoFactorAuthenticationService;
     
  
 
@@ -60,15 +60,22 @@ public class AuthenticationService {
     public String signin(SigninDto dto ) {
         try {
             Authentication authenticatedUser = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(),dto.getPassword()));
-            System.out.println(authenticatedUser);
-             SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
+
+            SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
             // System.out.println(authenticatedUser);
             User user = (User) authenticatedUser.getPrincipal();
             
+            if (user.isMfaEnabled()) 
+            {
+                user.setEnabled(true);
+                user.setSecret(twoFactorAuthenticationService.generateNewSecret());
+                userRepository.save(user);
+                return twoFactorAuthenticationService.generateQrCodeImageUri(user.getSecret());
+            }
+
             String jwt = jwtService.generateToken(user);
 
             return jwt;
-
 
         } catch (Exception e) {
             System.out.println(e.getLocalizedMessage());
