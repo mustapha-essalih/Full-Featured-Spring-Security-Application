@@ -1,0 +1,32 @@
+* Password Policies
+* CSRF
+* change password
+* autehntication , registration with email verification
+* forget password
+* Input Validation
+- refresh token
+- OAuth2 and Social Login
+- logout
+- Cross-Origin Resource Sharing (CORS)
+- build the front end
+- User Roles and Permissions : create some private routes for admins and users
+
+- dto
+- non-null
+- what is regular excepression and patter
+
+ 
+   
+
+- refresh token
+ 
+
+1- validation
+2- refresh token
+3- CORS
+
+- implement the front end
+
+- dont forget hashtags
+
+- create portfolio
