@@ -49,10 +49,7 @@ public class User implements UserDetails {
     private boolean mfaEnabled = true;
     private String secret;
     
-    public User() 
-    {
-
-    }
+    public User() {}
 
     public User (String username, String email, String password, Role role) {
         this.username = username;

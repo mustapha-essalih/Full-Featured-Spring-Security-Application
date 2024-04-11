@@ -5,7 +5,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import dev.api.dto.OtpDto;
-import dev.api.dto.TwoFaResponseDto;
 import dev.api.model.User;
 import dev.api.repository.UserRepository;
 import dev.samstevens.totp.code.CodeGenerator;
@@ -20,7 +19,6 @@ import dev.samstevens.totp.qr.ZxingPngQrGenerator;
 import dev.samstevens.totp.secret.DefaultSecretGenerator;
 import dev.samstevens.totp.time.SystemTimeProvider;
 import dev.samstevens.totp.time.TimeProvider;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import static dev.samstevens.totp.util.Utils.getDataUriForImage;
