@@ -1,8 +1,6 @@
 package dev.api.event.listiners;
 
 import java.io.UnsupportedEncodingException;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
@@ -13,13 +11,8 @@ import org.springframework.stereotype.Component;
 
 import dev.api.event.events.RegistrationEvent;
 import dev.api.model.User;
-import dev.api.model.VerificationToken;
-import dev.api.repository.VerificationTokenRepository;
-import dev.api.service.EmailVerificationService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -33,17 +26,19 @@ public class EmailVerificationListinner implements ApplicationListener<Registrat
     @Value("${spring.mail.username}")
     private String from; 
     
+    
     @Override
     public void onApplicationEvent(RegistrationEvent event) {
         
         user = event.getUser();
 
-        String url = event.getUrl()+ "/api/auth/emailVerification?token=" + event.getGeneratedverificationToken();
+        String url = event.getUrl()+ "/api/auth/emailVerification?token=" + event.getGeneratedJwtToken();
 
         try {
             sendVerificationEmail(url);
             
         } catch (Exception e) {
+            System.out.println(e.getLocalizedMessage());
             System.out.println("email error.");
             // TODO: handle exception
         }

@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -21,6 +22,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> userNotFoundException(BadCredentialsException e) 
     {
         return ResponseEntity.status(401).body(e.getMessage());
+    }
+
+
+    @ExceptionHandler(value = RuntimeException.class)
+    public ResponseEntity<?> userNotFoundException(RuntimeException e) 
+    {
+        return ResponseEntity.status(403).body(e.getMessage());
+    }
+
+
+    @ExceptionHandler(value = DisabledException.class)
+    public ResponseEntity<?> DisabledUser(DisabledException e) 
+    {
+        return ResponseEntity.status(403).body("should active your email, check your email");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

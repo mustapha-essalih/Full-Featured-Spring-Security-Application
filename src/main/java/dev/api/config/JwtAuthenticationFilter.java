@@ -5,18 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.security.Security;
-import java.util.logging.Logger;
-
  
-import jakarta.transaction.TransactionScoped;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,6 +17,8 @@ import org.springframework.web.ErrorResponse;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
+import dev.api.model.JwtToken;
+import dev.api.repository.JwtTokenRepository;
 import dev.api.service.JwtService;
 import dev.api.service.UserService;
 import io.jsonwebtoken.JwtException;
@@ -38,10 +29,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   
     private JwtService jwtService;
     private UserService userService;
+    private JwtTokenRepository jwtTokenRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserService userService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserService userService,
+            JwtTokenRepository jwtTokenRepository) {
         this.jwtService = jwtService;
         this.userService = userService;
+        this.jwtTokenRepository = jwtTokenRepository;
     }
 
     @Override
@@ -67,7 +61,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) // because 
             {
                 UserDetails userDetails = userService.loadUserByUsername(username);
-                if (jwtService.isTokenValid(jwt, userDetails)) 
+                JwtToken jwtToken = jwtTokenRepository.findByToken(jwt);
+                if (jwtService.isTokenValid(jwt, userDetails) && jwtToken.is_logged_out() == false) 
                 {
                     SecurityContext context = SecurityContextHolder.createEmptyContext();
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -95,6 +90,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }   
         filterChain.doFilter(request, response);
-        
     }
 }

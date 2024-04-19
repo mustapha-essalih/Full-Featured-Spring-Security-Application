@@ -3,26 +3,26 @@ package dev.api.model;
 import java.util.Date;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
-@NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "passwordToken")
 @Entity
-public class ResetTokenPassword extends Token {
-
+public class JwtToken extends Token { 
     
-    public ResetTokenPassword(String token,Date createdAt ,  Date expiresAt, User user)
+    private boolean is_logged_out = false;
+    
+    public JwtToken() {}
+    
+    public JwtToken(String token,Date createdAt ,  Date expiresAt, boolean is_logged_out, User user)
     {
         super.setToken(token);
         super.setCreatedAt(createdAt);
         super.setExpiresAt(expiresAt);
         super.setCreatedAt(createdAt);
+        this.is_logged_out = is_logged_out;
         super.setUser(user);
     }
+    
 }

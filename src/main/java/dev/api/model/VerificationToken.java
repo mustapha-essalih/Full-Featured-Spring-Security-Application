@@ -1,60 +1,21 @@
 package dev.api.model;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
 @Entity
-@Table(name = "verification_token")
-public class VerificationToken { 
-    
-    @Id  
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+public class VerificationToken extends Token {
 
-    private String token;
+    public VerificationToken(){}
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime expiresAt;
-
- 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(
-            nullable = false,
-            name = "user_id"
-    )
-    private User user;
-
-    public VerificationToken(String token,
-                             LocalDateTime createdAt,
-                             LocalDateTime expiresAt,
-                             User user) {
-        this.token = token;
-        this.createdAt = createdAt;
-        this.expiresAt = expiresAt;
-        this.user = user;
+    public VerificationToken(String token,Date createdAt ,  Date expiresAt, User user)
+    {
+        super.setToken(token);
+        super.setCreatedAt(createdAt);
+        super.setExpiresAt(expiresAt);
+        super.setCreatedAt(createdAt);
+        super.setUser(user);
     }
-
-    public VerificationToken() {
-    }
-
     
-
 }

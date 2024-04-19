@@ -1,16 +1,22 @@
 package dev.api.service;
 
-import dev.api.dto.SigninDto;
-import dev.api.dto.SignupDto;
-import dev.api.dto.UpdatePassword;
+import dev.api.dto.request.SigninDto;
+import dev.api.dto.request.SignupDto;
+import dev.api.dto.request.UpdatePassword;
+import dev.api.dto.response.JwtResponse;
+import dev.api.dto.response.TokenResponse;
 import dev.api.event.events.RegistrationEvent;
 import dev.api.model.Role;
 import dev.api.model.User;
 import dev.api.model.VerificationToken;
+import dev.api.model.JwtToken;
+import dev.api.repository.JwtTokenRepository;
 import dev.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,11 +43,11 @@ public class AuthenticationService {
     private final EmailVerificationService tokenVerificationService;
     private final TwoFactorAuthenticationService twoFactorAuthenticationService;
     private final PasswordEncoder encoder;
-
+    private final JwtTokenRepository jwtTokenRepository;
  
 
     public void signup(SignupDto dto , String url) {
-       
+       System.out.println(dto);
         if( userRepository.findByUsername(dto.getUsername()).isPresent() || 
             userRepository.findByEmail(dto.getEmail()).isPresent())
             return ;
@@ -52,39 +58,70 @@ public class AuthenticationService {
         
         userRepository.save(newUser);
 
-        String generatedverificationToken = UUID.randomUUID().toString();
+        String generateVerificationToken = UUID.randomUUID().toString();
         
-        VerificationToken verificationToken = new VerificationToken(generatedverificationToken, LocalDateTime.now(),LocalDateTime.now().plusMinutes(15), newUser);
-        tokenVerificationService.saveVerificationToken(verificationToken);
+        Date currentDate = new Date();
 
-        publisher.publishEvent(new RegistrationEvent(newUser , url , generatedverificationToken));
+        // Create a Calendar instance
+        Calendar calendar = Calendar.getInstance();
+
+        // Set the calendar to the current date and time
+        calendar.setTime(currentDate);
+
+        // Add 15 minutes to the calendar
+        calendar.add(Calendar.MINUTE, 15);
+
+        // Get the date 15 minutes later
+        Date datePlus15Minutes = calendar.getTime();
+
+        // VerificationToken verificationToken = new VerificationToken(generateVerificationToken, currentDate, datePlus15Minutes, newUser);
+        
+        // tokenVerificationService.saveVerificationToken(verificationToken);
+
+        // publisher.publishEvent(new RegistrationEvent(newUser , url , generateVerificationToken));
     }
 
 
-    public String signin(SigninDto dto ) {
-        try {
-            Authentication authenticatedUser = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(),dto.getPassword()));
+    public ResponseEntity<?> signin(SigninDto dto ) {
+        
+        Authentication authenticatedUser = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getUsername(),dto.getPassword()));
+        
 
-            SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
-            // System.out.println(authenticatedUser);
-            User user = (User) authenticatedUser.getPrincipal();
-            
-            if (user.isMfaEnabled()) 
-            {
-                user.setEnabled(true);
-                user.setSecret(twoFactorAuthenticationService.generateNewSecret());
-                userRepository.save(user);
-                return twoFactorAuthenticationService.generateQrCodeImageUri(user.getSecret());
-            }
+        SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
 
-            String jwt = jwtService.generateToken(user);
-
-            return jwt;
-
-        } catch (Exception e) {
-            System.out.println(e.getLocalizedMessage());
-            return null;
+        User user = (User) authenticatedUser.getPrincipal();
+        
+        if (user.isMfaEnabled()) 
+        {
+            user.setEnabled(true);
+            user.setSecret(twoFactorAuthenticationService.generateNewSecret());
+            userRepository.save(user);
+            return ResponseEntity.ok().body(twoFactorAuthenticationService.generateQrCodeImageUri(user.getSecret()));
         }
+    
+        JwtResponse jwt = jwtService.generateToken(user);
+
+        JwtToken jwtToken = new JwtToken(jwt.getJwt(), jwt.getIssuedAt(), jwt.getExpiration(), false, user);
+
+        revokeAllTokenByUser(user.getId());
+        jwtTokenRepository.save(jwtToken);
+        
+        String refreshToken = jwtService.generateRefreshToken(user);
+        return ResponseEntity.ok().body(new TokenResponse(jwt.getJwt() , refreshToken).toString());     
+    }
+
+    private void revokeAllTokenByUser(Integer userId) 
+    {
+        List<JwtToken> jwtTokenOfUser = jwtTokenRepository.findAllValidTokenByUser(userId);
+        if(jwtTokenOfUser.isEmpty()) {
+            return;
+        }
+
+        jwtTokenOfUser.forEach(t-> {
+            t.set_logged_out(true);
+        });
+
+        jwtTokenRepository.saveAll(jwtTokenOfUser);
     }
 
     public ResponseEntity<String>  updatePassword(UpdatePassword dto , String username)

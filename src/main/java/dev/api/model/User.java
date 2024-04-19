@@ -37,7 +37,6 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String email;
 
-    @JsonIgnore
     private String password;
   
 
@@ -45,8 +44,8 @@ public class User implements UserDetails {
     private Role role;
 
     private Boolean locked = false;
-    private Boolean enabled = false;   
-    private boolean mfaEnabled = true;
+    private Boolean enabled = true;   
+    private boolean mfaEnabled = false;
     private String secret;
     
     public User() {}
@@ -102,7 +101,7 @@ public class User implements UserDetails {
 
     @Override
     public String toString() {
-        return "User [id=" + id + ", username=" + username + ", email=" + email + ", password=" + password + ", role="
+        return "User [id=" + id + ", username=" + username + ", email=" + email + ", role="
                 + role + "]";
     }
 }

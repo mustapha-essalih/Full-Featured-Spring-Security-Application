@@ -8,23 +8,23 @@ public class RegistrationEvent extends ApplicationEvent{
 
     private User user;
     private String url;
-    private String generatedverificationToken;
+    private String generatedJwtToken;
 
     
-    public RegistrationEvent(User user, String url , String generatedverificationToken) 
+    public RegistrationEvent(User user, String url , String generatedJwtToken) 
     {
         super(user);
         this.user = user;
         this.url = url;
-        this.generatedverificationToken = generatedverificationToken;
+        this.generatedJwtToken = generatedJwtToken;
     }
     
-    public String getGeneratedverificationToken() {
-        return generatedverificationToken;
+    public String getGeneratedJwtToken() {
+        return generatedJwtToken;
     }
 
-    public void setGeneratedverificationToken(String generatedverificationToken) {
-        this.generatedverificationToken = generatedverificationToken;
+    public void setGeneratedJwtToken(String generatedJwtToken) {
+        this.generatedJwtToken = generatedJwtToken;
     }
     
     public User getUser() {

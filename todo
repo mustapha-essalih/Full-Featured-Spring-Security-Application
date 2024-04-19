@@ -1,0 +1,40 @@
+* Password Policies
+* CSRF
+* change password
+* autehntication , registration with email verification
+* forget password
+* Input Validation
+* refresh token
+* Cross-Origin Resource Sharing (CORS)
+* logout
+- OAuth2 and Social Login
+- build the front end
+- User Roles and Permissions : create some private routes for admins and users
+- front end get refresh token
+
+
+- dto
+- non-null
+- what is regular excepression and pattern
+
+ 
+   
+
+- implement the front end
+
+- dont forget hashtags
+
+- create portfolio
+
+
+
+-> in registration Root user : Account owner that performs tasks requiring unrestricted access. 
+
+                   IAM user : User within an account that performs daily tasks. Learn more
+
+
+
+- should save user with jwt
+- before save the jwt revok all of them with enshuring are not validDisabledUser
+
+- in logout hanlder revok the jwt

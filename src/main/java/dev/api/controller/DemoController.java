@@ -14,4 +14,10 @@ public class DemoController {
     }
 
 
+    
+    @GetMapping("/")
+    String test(){
+        return "token";
+    }
+
 }

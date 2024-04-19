@@ -1,10 +1,11 @@
 package dev.api.service;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import dev.api.dto.OtpDto;
+import dev.api.dto.request.OtpDto;
 import dev.api.model.User;
 import dev.api.repository.UserRepository;
 import dev.samstevens.totp.code.CodeGenerator;

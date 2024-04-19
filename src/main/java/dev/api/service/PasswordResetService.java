@@ -1,6 +1,7 @@
 package dev.api.service;
 
 import java.time.LocalDateTime;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
@@ -8,7 +9,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import dev.api.dto.ResetPasswordDto;
+import dev.api.dto.request.ResetPasswordDto;
 import dev.api.event.events.ResetPasswordEvent;
 import dev.api.model.ResetTokenPassword;
 import dev.api.model.User;
@@ -39,7 +40,21 @@ public class PasswordResetService {
 
         String passwordResetToken = UUID.randomUUID().toString();
     
-        ResetTokenPassword resetTokenPassword = new ResetTokenPassword(passwordResetToken, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), user);
+        Date currentDate = new Date();
+
+        // Create a Calendar instance
+        Calendar calendar = Calendar.getInstance();
+
+        // Set the calendar to the current date and time
+        calendar.setTime(currentDate);
+
+        // Add 15 minutes to the calendar
+        calendar.add(Calendar.MINUTE, 15);
+
+        // Get the date 15 minutes later
+        Date datePlus15Minutes = calendar.getTime();
+        
+        ResetTokenPassword resetTokenPassword = new ResetTokenPassword(passwordResetToken, currentDate, datePlus15Minutes, user);
 
         repository.save(resetTokenPassword);
  

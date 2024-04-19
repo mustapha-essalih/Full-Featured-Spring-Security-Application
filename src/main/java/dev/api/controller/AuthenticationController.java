@@ -1,23 +1,23 @@
 package dev.api.controller;
 
-import dev.api.dto.OtpDto;
-import dev.api.dto.ResetPasswordDto;
-import dev.api.dto.SigninDto;
-import dev.api.dto.SignupDto;
-import dev.api.dto.UpdatePassword;
-import dev.api.dto.UserDto;
+import dev.api.dto.request.OtpDto;
+import dev.api.dto.request.RefreshTokenRequest;
+import dev.api.dto.request.ResetPasswordDto;
+import dev.api.dto.request.SigninDto;
+import dev.api.dto.request.SignupDto;
+import dev.api.dto.request.UpdatePassword;
+import dev.api.dto.request.UserDto;
 import dev.api.service.AuthenticationService;
 import dev.api.service.EmailVerificationService;
+import dev.api.service.JwtService;
 import dev.api.service.PasswordResetService;
 import dev.api.service.TwoFactorAuthenticationService;
-import io.jsonwebtoken.JwtException;
 
 import java.security.Principal;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,8 +31,8 @@ import lombok.RequiredArgsConstructor;
 import jakarta.servlet.http.HttpServletRequest;
 
 
-@RequiredArgsConstructor
 @CrossOrigin("*")
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 @RestController
 public class AuthenticationController {
@@ -41,7 +41,9 @@ public class AuthenticationController {
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService; 
     private final TwoFactorAuthenticationService twoFactorAuthenticationService;
-    
+    private final JwtService jwtService;
+
+
     @PostMapping("/signup")
     ResponseEntity<String> signup(@RequestBody @Valid SignupDto dto , HttpServletRequest request)
     { 
@@ -50,19 +52,19 @@ public class AuthenticationController {
     }
 
     @PostMapping("/signin")
-    ResponseEntity<String> signin(@RequestBody SigninDto dto, HttpServletResponse res)
+    ResponseEntity<?> signin(@RequestBody SigninDto dto, HttpServletResponse res)
     {
-        String response = authenticationService.signin(dto);
-     
-        if (response != null) 
-        {
-            // Cookie cookie = new Cookie("access_token", response);
-            // cookie.setHttpOnly(true);
-            // response.addCookie(cookie);
+        return authenticationService.signin(dto);
 
-            return ResponseEntity.ok().body(response);    
-        }
-        return ResponseEntity.status(401).build();
+        // if (response != null) 
+        // {
+        //     // Cookie cookie = new Cookie("access_token", response);
+        //     // cookie.setHttpOnly(true);
+        //     // response.addCookie(cookie);
+
+        //     return response;    
+        // }
+        // return ResponseEntity.status(401).build();
     }
 
     
@@ -129,18 +131,20 @@ public class AuthenticationController {
     @PostMapping("/verifyOTP")
     public ResponseEntity<?> verifyOTP(@RequestBody OtpDto dto) 
     {
-        // try {
-            var jwt = twoFactorAuthenticationService.verifyCode(dto);
-            return ResponseEntity.ok(jwt);
-        // } catch (Exception e) {
-        //     return ResponseEntity.status(403).body(e.getMessage());
-        // }
+        var jwt = twoFactorAuthenticationService.verifyCode(dto);
+        return ResponseEntity.ok(jwt);
     }
 
     @PatchMapping("/updatepassword")
     public  ResponseEntity<?>  updatePassword(@RequestBody @Valid UpdatePassword dto , Principal  client){
         return authenticationService.updatePassword(dto , client.getName());
     } 
+
+    @PostMapping("/refreshToken")
+    public ResponseEntity<String> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) 
+    {    
+        return jwtService.refreshToken(refreshTokenRequest.getToken());
+    }
 
     private String getUrlOfRequest(HttpServletRequest request){
     

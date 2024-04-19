@@ -1,6 +1,8 @@
 package dev.api.service;
 
 import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -9,8 +11,10 @@ import org.springframework.stereotype.Service;
 import dev.api.event.events.RegistrationEvent;
 import dev.api.model.User;
 import dev.api.model.VerificationToken;
+import dev.api.model.JwtToken;
 import dev.api.repository.UserRepository;
 import dev.api.repository.VerificationTokenRepository;
+import dev.api.repository.JwtTokenRepository;
 import lombok.RequiredArgsConstructor;
  
 @RequiredArgsConstructor
@@ -40,9 +44,10 @@ public class EmailVerificationService {
             return "This account has already been verified, please, login.";
         }
 
-        LocalDateTime expiredAt = verificationToken.getExpiresAt();
+        Date expiredAt = verificationToken.getExpiresAt();
 
-        if (expiredAt.isBefore(LocalDateTime.now())) {
+
+        if (expiredAt.before(expiredAt)) {
             return "token expired";
         }
 
@@ -65,13 +70,26 @@ public class EmailVerificationService {
             return "This account has already been verified, please, login.";
         }
 
-        String generatedverificationToken = UUID.randomUUID().toString();
-        
-        VerificationToken verificationToken = new VerificationToken(generatedverificationToken, LocalDateTime.now(),LocalDateTime.now().plusMinutes(15), user);
-        
-        this.saveVerificationToken(verificationToken);
+        Date currentDate = new Date();
 
-        publisher.publishEvent(new RegistrationEvent(user , url , generatedverificationToken));
+        // Create a Calendar instance
+        Calendar calendar = Calendar.getInstance();
+
+        // Set the calendar to the current date and time
+        calendar.setTime(currentDate);
+
+        // Add 15 minutes to the calendar
+        calendar.add(Calendar.MINUTE, 15);
+        Date datePlus15Minutes = calendar.getTime();
+
+
+        String generatedVerificationToken = UUID.randomUUID().toString();
+        
+        VerificationToken verificationToken = new VerificationToken(generatedVerificationToken, currentDate ,datePlus15Minutes, user);
+        
+        tokenRepository.save(verificationToken);
+
+        publisher.publishEvent(new RegistrationEvent(user , url , generatedVerificationToken));
         return "A new verification link has been sent to your email,please, check to activate your account";
 	}
 

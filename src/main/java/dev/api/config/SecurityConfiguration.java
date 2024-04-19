@@ -13,15 +13,14 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import dev.api.model.Role;
 import dev.api.service.UserService;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+ 
 
 
 @Configuration
@@ -31,12 +30,15 @@ public class SecurityConfiguration {
     
     private UserService userService;
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private CustomLogoutHandler logoutHandler;
     
     
-    
-    public SecurityConfiguration(UserService userService, JwtAuthenticationFilter jwtAuthenticationFilter) {
+
+    public SecurityConfiguration(UserService userService, JwtAuthenticationFilter jwtAuthenticationFilter,
+            CustomLogoutHandler logoutHandler) {
         this.userService = userService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.logoutHandler = logoutHandler;
     }
 
     @Bean
@@ -46,12 +48,17 @@ public class SecurityConfiguration {
         http.authorizeHttpRequests(request -> request.requestMatchers("/api/auth/**").permitAll()
         .anyRequest().authenticated());
         
-        http.sessionManagement(
+        http.sessionManagement( // ?
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             );
+
         http.authenticationProvider(authenticationProvider());
         http.addFilterAfter(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-            
+
+        http.logout(l->l
+        .logoutUrl("/logout")
+        .addLogoutHandler(logoutHandler)
+        .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext()));
 
         return http.build();
     }
